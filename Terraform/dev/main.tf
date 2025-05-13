@@ -4,25 +4,25 @@ resource "google_service_account" "terraform-pyramid" {
   display_name = "Infra to invade egypt"
 }
 
-# IAM Bindings for Service Account
-resource "google_project_iam_binding" "storage-admin" {
-  project    = var.project_id
+# IAM permissions using member resources instead of bindings
+resource "google_project_iam_member" "storage-admin" {
+  project    = "exalted-crane-459000-g5"
   role       = "roles/storage.admin"
-  members    = ["serviceAccount:${google_service_account.terraform-pyramid.email}"]
+  member     = "serviceAccount:${google_service_account.terraform-pyramid.email}"
   depends_on = [google_service_account.terraform-pyramid]
 }
 
-resource "google_project_iam_binding" "compute-admin" {
-  project    = var.project_id
+resource "google_project_iam_member" "compute-admin" {
+  project    = "exalted-crane-459000-g5"
   role       = "roles/compute.admin"
-  members    = ["serviceAccount:${google_service_account.terraform-pyramid.email}"]
+  member     = "serviceAccount:${google_service_account.terraform-pyramid.email}"
   depends_on = [google_service_account.terraform-pyramid]
 }
 
-resource "google_project_iam_binding" "container-admin" {
-  project    = var.project_id
+resource "google_project_iam_member" "container-admin" {
+  project    = "exalted-crane-459000-g5"
   role       = "roles/container.admin"
-  members    = ["serviceAccount:${google_service_account.terraform-pyramid.email}"]
+  member     = "serviceAccount:${google_service_account.terraform-pyramid.email}"
   depends_on = [google_service_account.terraform-pyramid]
 }
 
