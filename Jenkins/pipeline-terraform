@@ -19,7 +19,7 @@ pipeline {
     agent any
 
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = "${env.WORKSPACE}/exalted-crane-459000-g5-efe625ff8105.json"
+        GOOGLE_APPLICATION_CREDENTIALS = "${env.WORKSPACE}/gcp-service-account-json.json"
     }
 
     stages {
@@ -51,9 +51,18 @@ pipeline {
                     script {
                         withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                             sh '''
-                                cp $GOOGLE_APPLICATION_CREDENTIALS ./credentials.json
                                 export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
                                 terraform init
+
+                                # Check if the service account is already in the state (example)
+                                if ! terraform state list | grep "google_service_account.terraform-pyramid"; then
+                                    terraform import google_service_account.terraform-pyramid projects/...
+                                fi
+
+                                # Check if the network is already in the state (example)
+                                if ! terraform state list | grep "google_compute_network.this"; then
+                                    terraform import google_compute_network.this projects/...
+                                fi
                             '''
                         }
                     }
