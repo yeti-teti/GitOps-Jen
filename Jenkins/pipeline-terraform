@@ -20,7 +20,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'github-credentials-id', url: 'https://github.com/yeti-teti/GitOps-Jen'
+                git branch: 'main', credentialsId: 'github-credentials-id', url: 'https://github.com/yeti-teti/GitOps-Jen.git'
+
+                dir('Terraform/dev'){
+                    echo "Changed Dir: ${pwd()}"
+                }
             }
         }
 
@@ -38,9 +42,15 @@ pipeline {
 
         stage('Initialize Terraform') {
             steps {
-                script {
-                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                        sh 'terraform init'
+                dir('Terraform/dev') {
+                    script {
+                        withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            sh '''
+                                cp $GOOGLE_APPLICATION_CREDENTIALS ./credentials.json
+                                export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
+                                terraform init
+                            '''
+                        }
                     }
                 }
             }
@@ -51,9 +61,14 @@ pipeline {
                 expression { params.Terraform_Action == 'plan' }
             }
             steps {
-                script {
-                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                        sh 'terraform plan -out=terraform.tfplan'
+                dir('Terraform/dev') {
+                    script {
+                        withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            sh '''
+                                export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
+                                terraform plan -out=terraform.tfplan
+                            '''
+                        }
                     }
                 }
             }
@@ -64,9 +79,14 @@ pipeline {
                 expression { params.Terraform_Action == 'apply' }
             }
             steps {
-                script {
-                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                        sh 'terraform apply -auto-approve terraform.tfplan'
+                dir('Terraform/dev') {
+                    script {
+                        withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            sh '''
+                                export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
+                                terraform apply -auto-approve
+                            '''
+                        }
                     }
                 }
             }
@@ -77,9 +97,14 @@ pipeline {
                 expression { params.Terraform_Action == 'destroy' }
             }
             steps {
-                script {
-                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                        sh 'terraform destroy -auto-approve'
+                dir('Terraform/dev') {
+                    script {
+                        withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            sh '''
+                                export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
+                                terraform destroy -auto-approve
+                            '''
+                        }
                     }
                 }
             }
