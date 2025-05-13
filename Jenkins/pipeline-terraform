@@ -1,0 +1,94 @@
+properties([
+    parameters([
+        string(
+            defaultValue: 'dev',
+            name: 'Environment'
+        ),
+        choice(
+            choices: ['plan', 'apply', 'destroy'],
+            name: 'Terraform_Action'
+        )
+    ])
+])
+pipeline {
+    agent any
+
+    environment {
+        GOOGLE_APPLICATION_CREDENTIALS = "${env.WORKSPACE}/exalted-crane-459000-g5-efe625ff8105.json"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'github-credentials-id', url: 'https://github.com/yeti-teti/GitOps-Jen'
+            }
+        }
+
+        stage('Install Terraform') {
+            steps {
+                sh '''
+                    if ! [ -x "$(command -v terraform)" ]; then
+                        wget https://releases.hashicorp.com/terraform/1.5.0/terraform_1.5.0_linux_amd64.zip
+                        unzip terraform_1.5.0_linux_amd64.zip
+                        sudo mv terraform /usr/local/bin/
+                    fi
+                '''
+            }
+        }
+
+        stage('Initialize Terraform') {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        sh 'terraform init'
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            when {
+                expression { params.Terraform_Action == 'plan' }
+            }
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        sh 'terraform plan -out=terraform.tfplan'
+                    }
+                }
+            }
+        }
+
+        stage('Apply Terraform') {
+            when {
+                expression { params.Terraform_Action == 'apply' }
+            }
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        sh 'terraform apply -auto-approve terraform.tfplan'
+                    }
+                }
+            }
+        }
+
+        stage('Destroy Terraform') {
+            when {
+                expression { params.Terraform_Action == 'destroy' }
+            }
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        sh 'terraform destroy -auto-approve'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
