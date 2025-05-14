@@ -19,7 +19,7 @@ pipeline {
     agent any
 
     environment {
-        // GOOGLE_APPLICATION_CREDENTIALS = "${env.WORKSPACE}/gcp-service-account-json.json"
+        GOOGLE_APPLICATION_CREDENTIALS = "${env.WORKSPACE}/gcp-service-account-json.json"
     }
 
     stages {

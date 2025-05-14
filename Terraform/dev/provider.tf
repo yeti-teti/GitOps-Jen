@@ -1,7 +1,6 @@
 provider "google" {
-  project     = var.project_id
-  region      = var.region
-  credentials = "${env.WORKSPACE}/Terraform/dev/credentials.json"
+  project = var.project_id
+  region  = var.region
 }
 
 terraform {
