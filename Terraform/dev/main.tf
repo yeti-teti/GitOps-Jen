@@ -121,6 +121,8 @@ resource "google_container_cluster" "primary" {
 
   node_config {
     service_account = google_service_account.terraform-pyramid.email
+    disk_type       = "pd-standard" // Explicitly set to standard disk
+    disk_size_gb    = 30
   }
 
   private_cluster_config {
@@ -152,6 +154,8 @@ resource "google_container_node_pool" "primary_preemptible_nodes" {
     machine_type    = "e2-medium"
     service_account = google_service_account.terraform-pyramid.email
     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+    disk_type       = "pd-standard"
+    disk_size_gb    = 30
   }
 
   depends_on = [google_container_cluster.primary]

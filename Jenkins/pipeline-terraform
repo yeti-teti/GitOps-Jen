@@ -18,10 +18,17 @@ properties([
 pipeline {
     agent any
 
+    environment {
+        GOOGLE_APPLICATION_CREDENTIALS = "${env.WORKSPACE}/gcp-service-account-json.json"
+    }
+
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', credentialsId: 'github-credentials-id', url: 'https://github.com/yeti-teti/GitOps-Jen.git'
+                dir('Terraform/dev'){
+                    echo "Changed Dir: ${pwd()}"
+                }
             }
         }
 
@@ -29,13 +36,9 @@ pipeline {
             steps {
                 sh '''
                     if ! [ -x "$(command -v terraform)" ]; then
-                        echo "Terraform not found, installing..."
                         wget https://releases.hashicorp.com/terraform/1.5.0/terraform_1.5.0_linux_amd64.zip
                         unzip terraform_1.5.0_linux_amd64.zip
                         sudo mv terraform /usr/local/bin/
-                        terraform --version
-                    else
-                        echo "Terraform already installed: $(terraform --version)"
                     fi
                 '''
             }
@@ -43,13 +46,13 @@ pipeline {
 
         stage('Initialize Terraform') {
             steps {
-                dir('Terraform/dev') { // Ensure you are in the correct directory where your .tf files are
-                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GCP_SA_KEY_PATH')]) {
-                        sh '''
-                            export GOOGLE_APPLICATION_CREDENTIALS="${GCP_SA_KEY_PATH}"
-                            echo "Initializing Terraform in $(pwd)"
-                            terraform init -input=false
-                        '''
+                dir('Terraform/dev') {
+                    script {
+                        withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            sh '''
+                                terraform init
+                            '''
+                        }
                     }
                 }
             }
@@ -61,11 +64,10 @@ pipeline {
             }
             steps {
                 dir('Terraform/dev') {
-                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GCP_SA_KEY_PATH')]) {
-                        sh '''
-                            export GOOGLE_APPLICATION_CREDENTIALS="${GCP_SA_KEY_PATH}"
-                            terraform plan -out=terraform.tfplan -input=false -var="project_id=${params.GCP_PROJECT_ID}"
-                        '''
+                    script {
+                        withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            sh 'terraform plan -out=terraform.tfplan'
+                        }
                     }
                 }
             }
@@ -77,15 +79,15 @@ pipeline {
             }
             steps {
                 dir('Terraform/dev') {
-                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GCP_SA_KEY_PATH')]) {
-                        sh '''
-                            export GOOGLE_APPLICATION_CREDENTIALS="${GCP_SA_KEY_PATH}"
-                            terraform apply -auto-approve -input=false -var="project_id=${params.GCP_PROJECT_ID}"
-                        '''
+                    script {
+                        withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                                sh 'terraform apply -auto-approve'
+                        }
                     }
                 }
             }
         }
+
 
         stage('Destroy Terraform') {
             when {
@@ -93,11 +95,10 @@ pipeline {
             }
             steps {
                 dir('Terraform/dev') {
-                    withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GCP_SA_KEY_PATH')]) {
-                        sh '''
-                            export GOOGLE_APPLICATION_CREDENTIALS="${GCP_SA_KEY_PATH}"
-                            terraform destroy -auto-approve -input=false -var="project_id=${params.GCP_PROJECT_ID}"
-                        '''
+                    script {
+                        withCredentials([file(credentialsId: 'gcp-service-account-json', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                                    sh 'terraform destroy -auto-approve'
+                        }
                     }
                 }
             }
