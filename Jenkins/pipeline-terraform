@@ -52,8 +52,6 @@ pipeline {
                             sh '''
                                 export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
                                 terraform init
-                                terraform import google_service_account.terraform-pyramid projects/...
-                                terraform import google_compute_network.this projects/...
                             '''
                         }
                     }
