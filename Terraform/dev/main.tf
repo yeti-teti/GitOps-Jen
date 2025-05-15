@@ -187,7 +187,7 @@ resource "google_container_cluster" "primary" {
 }
 
 # Node pool for GKE
-resource "google_container_node_pool" "primary_preemptible_nodes" {
+resource "google_container_node_pool" "primary_nodes" {
   name     = "cleo-node-pool"
   location = var.region
   cluster  = google_container_cluster.primary.name
@@ -196,12 +196,12 @@ resource "google_container_node_pool" "primary_preemptible_nodes" {
   node_locations = [var.zone]
 
   node_config {
-    preemptible     = true
-    machine_type    = "e2-medium"
+    preemptible     = false
+    machine_type    = "e2-standard-2"
     service_account = google_service_account.terraform-pyramid.email
     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
     disk_type       = "pd-standard"
-    disk_size_gb    = 30
+    disk_size_gb    = 50
   }
 
   depends_on = [google_container_cluster.primary]
