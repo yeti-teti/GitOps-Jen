@@ -80,7 +80,7 @@ resource "google_compute_firewall" "gke_master_to_nodes_kubelet" {
   }
 
   source_ranges = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
-  target_tags   = ["gke-gke-cluster-egypt-4d4d7b3a-node"]
+  target_tags   = ["gke-gke-cluster-egypt-50f28718-node"]
 }
 # Allow GKE Master for webhooks
 resource "google_compute_firewall" "gke_master_to_nodes_webhooks" {
@@ -95,7 +95,7 @@ resource "google_compute_firewall" "gke_master_to_nodes_webhooks" {
     ports    = ["443", "15017"] // Common ports for webhooks, adjust as needed
   }
   source_ranges = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
-  target_tags   = ["gke-gke-cluster-egypt-4d4d7b3a-node"]
+  target_tags   = ["gke-gke-cluster-egypt-50f28718-node"]
 }
 # Allow traffic within the GKE node subnet
 resource "google_compute_firewall" "gke_nodes_internal_communication" {
@@ -126,7 +126,7 @@ resource "google_compute_firewall" "gke_nodes_to_master_api" {
   }
   source_ranges      = [google_compute_subnetwork.this_private.ip_cidr_range]
   destination_ranges = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
-  target_tags        = ["gke-gke-cluster-egypt-4d4d7b3a-node"]
+  target_tags        = ["gke-gke-cluster-egypt-50f28718-node"]
 }
 
 
