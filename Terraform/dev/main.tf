@@ -150,6 +150,11 @@ resource "google_compute_router_nat" "this" {
 }
 
 # Bastion resource for GKE
+resource "google_compute_address" "bastion_static_ip" {
+  name   = "${var.network_name}-bastion-static-ip"
+  region = var.region
+}
+
 resource "google_compute_instance" "bastion" {
   name         = "bastion-vm-gke"
   machine_type = "e2-medium"
@@ -162,7 +167,9 @@ resource "google_compute_instance" "bastion" {
   network_interface {
     network    = google_compute_network.this.self_link
     subnetwork = google_compute_subnetwork.this_public.self_link
-    access_config {}
+    access_config {
+      nat_ip = google_compute_address.bastion_static_ip.address
+    }
   }
   tags                    = ["bastion"]
   metadata_startup_script = <<-EOT
@@ -185,7 +192,7 @@ resource "google_container_cluster" "primary" {
 
   node_config {
     service_account = google_service_account.terraform-pyramid.email
-    disk_type       = "pd-standard" // Explicitly set to standard disk
+    disk_type       = "pd-standard"
     disk_size_gb    = 30
   }
 
@@ -197,7 +204,7 @@ resource "google_container_cluster" "primary" {
 
   master_authorized_networks_config {
     cidr_blocks {
-      cidr_block = format("%s/32", google_compute_instance.bastion.network_interface[0].access_config[0].nat_ip)
+      cidr_block = format("%s/32", google_compute_address.bastion_static_ip.address)
     }
   }
 
