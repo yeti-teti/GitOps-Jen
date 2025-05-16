@@ -66,53 +66,59 @@ resource "google_compute_firewall" "default" {
   source_ranges = ["0.0.0.0/0"]
 }
 
-# Allow GKE Master to communicate with Kubelets on nodes
+# Allow GKE Master to communicate with Kubelets on nodes (INGRESS to nodes)
 resource "google_compute_firewall" "gke_master_to_nodes_kubelet" {
   name        = "${var.network_name}-gke-master-to-nodes-kubelet"
   network     = google_compute_network.this.id
-  project     = var.project_id # Good practice to specify project
+  project     = var.project_id
   description = "Allow GKE master to connect to kubelets on TCP 10250"
-  priority    = 1000 # Default priority, adjust if needed
+  priority    = 920
 
   allow {
     protocol = "tcp"
     ports    = ["10250"] # Kubelet API port
   }
 
-  source_ranges = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
-  target_tags   = ["gke-gke-cluster-egypt-50f28718-node"]
+  source_ranges           = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
+  target_service_accounts = [google_service_account.terraform-pyramid.email]
 }
-# Allow GKE Master for webhooks
+# Allow GKE Master for webhooks (INGRESS to nodes)
 resource "google_compute_firewall" "gke_master_to_nodes_webhooks" {
   name        = "${var.network_name}-gke-master-to-nodes-webhooks"
   network     = google_compute_network.this.id
   project     = var.project_id
   description = "Allow GKE master to connect to node webhooks on TCP 443 (and others if needed)"
-  priority    = 1000
+  priority    = 930
 
   allow {
     protocol = "tcp"
-    ports    = ["443", "15017"] // Common ports for webhooks, adjust as needed
+    ports    = ["443", "15017"] // Common ports for webhooks
   }
-  source_ranges = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
-  target_tags   = ["gke-gke-cluster-egypt-50f28718-node"]
+  source_ranges           = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
+  target_service_accounts = [google_service_account.terraform-pyramid.email]
 }
-# Allow traffic within the GKE node subnet
+
+# Allow traffic within the GKE node subnet. [Both INGRESS and EGRESS between nodes]
 resource "google_compute_firewall" "gke_nodes_internal_communication" {
   name        = "${var.network_name}-gke-nodes-internal"
   network     = google_compute_network.this.id
   project     = var.project_id
   description = "Allow all traffic between nodes in the GKE private subnet"
-  priority    = 1000
+  priority    = 940
 
   allow {
     protocol = "all"
   }
 
+  source_service_accounts = [google_service_account.terraform-pyramid.email]
   // Allow traffic from any node in the private subnet to any other node in the private subnet.
   source_ranges = [google_compute_subnetwork.this_private.ip_cidr_range]
+
+  target_service_accounts = [google_service_account.terraform-pyramid.email]
+  destination_ranges      = [google_compute_subnetwork.this_private.ip_cidr_range]
 }
 
+# EGRESS from nodes
 resource "google_compute_firewall" "gke_nodes_to_master_api" {
   name        = "${var.network_name}-gke-nodes-to-master"
   network     = google_compute_network.this.id
@@ -124,9 +130,10 @@ resource "google_compute_firewall" "gke_nodes_to_master_api" {
     protocol = "tcp"
     ports    = ["443"]
   }
-  source_ranges      = [google_compute_subnetwork.this_private.ip_cidr_range]
-  destination_ranges = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
-  target_tags        = ["gke-gke-cluster-egypt-50f28718-node"]
+  # Rule applies to instances running as this service account, which are also in the source_ranges
+  target_service_accounts = [google_service_account.terraform-pyramid.email]
+  source_ranges           = [google_compute_subnetwork.this_private.ip_cidr_range] # SA must be in this subnet
+  destination_ranges      = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
 }
 
 
