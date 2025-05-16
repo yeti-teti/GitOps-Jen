@@ -134,8 +134,25 @@ resource "google_compute_firewall" "gke_nodes_to_master_api" {
   # Rule applies to instances running as this service account, which are also in the source_ranges
   target_service_accounts = [google_service_account.terraform-pyramid.email]
   source_ranges           = [google_compute_subnetwork.this_private.ip_cidr_range] # SA must be in this subnet
-  destination_ranges      = ["0.0.0.0/0"]
-  # destination_ranges      = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
+  destination_ranges      = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
+}
+
+resource "google_compute_firewall" "gke_nodes_to_konnectivity_server" {
+  name        = "${var.network_name}-gke-nodes-to-konnectivity"
+  network     = google_compute_network.this.id
+  project     = var.project_id
+  description = "Allow GKE nodes (Konnectivity agents) to connect to Konnectivity server on TCP 8132"
+  priority    = 905
+  direction   = "EGRESS"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["8132"]
+  }
+
+  // This rule applies to traffic originating from your GKE nodes
+  target_service_accounts = [google_service_account.terraform-pyramid.email]
+  destination_ranges      = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
 }
 
 
