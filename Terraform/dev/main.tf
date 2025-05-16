@@ -125,6 +125,7 @@ resource "google_compute_firewall" "gke_nodes_to_master_api" {
   project     = var.project_id
   description = "Allow GKE nodes to connect to GKE master API server"
   priority    = 900
+  direction   = "EGRESS"
 
   allow {
     protocol = "tcp"
@@ -133,7 +134,8 @@ resource "google_compute_firewall" "gke_nodes_to_master_api" {
   # Rule applies to instances running as this service account, which are also in the source_ranges
   target_service_accounts = [google_service_account.terraform-pyramid.email]
   source_ranges           = [google_compute_subnetwork.this_private.ip_cidr_range] # SA must be in this subnet
-  destination_ranges      = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
+  destination_ranges      = ["0.0.0.0/0"]
+  # destination_ranges      = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
 }
 
 
