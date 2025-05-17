@@ -20,15 +20,16 @@ data "google_container_engine_versions" "gke_version" {
 }
 
 resource "google_container_cluster" "primary" {
-  name     = "${var.project_id}-gke"
-  location = var.region
-
+  name                     = "${var.project_id}-gke"
+  location                 = var.region
   remove_default_node_pool = true
   initial_node_count       = 1
-
-  network    = google_compute_network.vpc.name
-  subnetwork = google_compute_subnetwork.subnet.name
-
+  network                  = google_compute_network.vpc.name
+  subnetwork               = google_compute_subnetwork.subnet.name
+  ip_allocation_policy {
+    cluster_secondary_range_name  = "pods"
+    services_secondary_range_name = "services"
+  }
   node_config {
     machine_type = "e2-small"
     disk_type    = "pd-standard"
