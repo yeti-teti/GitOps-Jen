@@ -66,37 +66,37 @@ resource "google_compute_firewall" "default" {
   source_ranges = ["0.0.0.0/0"]
 }
 
-# Allow GKE Master to communicate with Kubelets on nodes (INGRESS to nodes)
-resource "google_compute_firewall" "gke_master_to_nodes_kubelet" {
-  name        = "${var.network_name}-gke-master-to-nodes-kubelet"
-  network     = google_compute_network.this.id
-  project     = var.project_id
-  description = "Allow GKE master to connect to kubelets on TCP 10250"
-  priority    = 920
+# # Allow GKE Master to communicate with Kubelets on nodes (INGRESS to nodes)
+# resource "google_compute_firewall" "gke_master_to_nodes_kubelet" {
+#   name        = "${var.network_name}-gke-master-to-nodes-kubelet"
+#   network     = google_compute_network.this.id
+#   project     = var.project_id
+#   description = "Allow GKE master to connect to kubelets on TCP 10250"
+#   priority    = 920
 
-  allow {
-    protocol = "tcp"
-    ports    = ["10250"] # Kubelet API port
-  }
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["10250"] # Kubelet API port
+#   }
 
-  source_ranges           = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
-  target_service_accounts = [google_service_account.terraform-pyramid.email]
-}
-# Allow GKE Master for webhooks (INGRESS to nodes)
-resource "google_compute_firewall" "gke_master_to_nodes_webhooks" {
-  name        = "${var.network_name}-gke-master-to-nodes-webhooks"
-  network     = google_compute_network.this.id
-  project     = var.project_id
-  description = "Allow GKE master to connect to node webhooks on TCP 443 (and others if needed)"
-  priority    = 930
+#   source_ranges           = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
+#   target_service_accounts = [google_service_account.terraform-pyramid.email]
+# }
+# # Allow GKE Master for webhooks (INGRESS to nodes)
+# resource "google_compute_firewall" "gke_master_to_nodes_webhooks" {
+#   name        = "${var.network_name}-gke-master-to-nodes-webhooks"
+#   network     = google_compute_network.this.id
+#   project     = var.project_id
+#   description = "Allow GKE master to connect to node webhooks on TCP 443 (and others if needed)"
+#   priority    = 930
 
-  allow {
-    protocol = "tcp"
-    ports    = ["443", "15017"] // Common ports for webhooks
-  }
-  source_ranges           = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
-  target_service_accounts = [google_service_account.terraform-pyramid.email]
-}
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["443", "15017"] // Common ports for webhooks
+#   }
+#   source_ranges           = [google_container_cluster.primary.private_cluster_config[0].master_ipv4_cidr_block]
+#   target_service_accounts = [google_service_account.terraform-pyramid.email]
+# }
 
 # Allow traffic within the GKE node subnet. [Both INGRESS and EGRESS between nodes]
 resource "google_compute_firewall" "gke_nodes_internal_communication" {
