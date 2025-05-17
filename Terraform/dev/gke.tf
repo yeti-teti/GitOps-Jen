@@ -30,6 +30,7 @@ resource "google_container_cluster" "primary" {
   subnetwork = google_compute_subnetwork.subnet.name
 
   node_config {
+    machine_type = "e2-small"
     disk_type    = "pd-standard"
     disk_size_gb = 50
   }
@@ -56,7 +57,7 @@ resource "google_container_node_pool" "primary_nodes" {
 
     # preemptible  = true
     # machine_type = "n1-standard-1"
-    machine_type = "e2-standard-2"
+    machine_type = "e2-medium"
     tags         = ["gke-node", "${var.project_id}-gke"]
     disk_type    = "pd-standard"
     disk_size_gb = 50
