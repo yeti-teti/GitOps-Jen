@@ -31,7 +31,7 @@ resource "google_container_cluster" "primary" {
     services_secondary_range_name = "services"
   }
   node_config {
-    machine_type = "e2-small"
+    machine_type = "e2-medium"
     disk_type    = "pd-standard"
     disk_size_gb = 50
   }
