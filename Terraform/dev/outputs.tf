@@ -1,15 +1,19 @@
-output "gke_cluster_name" {
-  value = google_container_cluster.primary.name
+output "region" {
+  value       = var.region
+  description = "GCloud Region"
 }
 
-output "gke_cluster_endpoint" {
-  value = google_container_cluster.primary.endpoint
+output "project_id" {
+  value       = var.project_id
+  description = "GCloud Project ID"
 }
 
-output "bastion_ip" {
-  value = google_compute_instance.bastion.network_interface[0].access_config[0].nat_ip
+output "kubernetes_cluster_name" {
+  value       = google_container_cluster.primary.name
+  description = "GKE Cluster Name"
 }
 
-output "service_account_email" {
-  value = google_service_account.terraform-pyramid.email
+output "kubernetes_cluster_host" {
+  value       = google_container_cluster.primary.endpoint
+  description = "GKE Cluster Host"
 }
