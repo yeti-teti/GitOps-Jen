@@ -1,35 +1,13 @@
-# Bastion resource for GKE
-resource "google_compute_address" "bastion_static_ip" {
-  name   = "${var.project_id}-bastion-static-ip"
-  region = var.region
+variable "gke_username" {
+  default     = ""
+  description = "gke username"
 }
 
-resource "google_compute_instance" "bastion" {
-  name         = "${var.project_id}-bastion-vm-gke"
-  machine_type = "e2-medium"
-  zone         = var.zone
-  boot_disk {
-    initialize_params {
-      image = "debian-cloud/debian-11"
-    }
-  }
-  network_interface {
-    network    = google_compute_network.vpc.self_link
-    subnetwork = google_compute_subnetwork.subnet_public.self_link
-    access_config {
-      nat_ip = google_compute_address.bastion_static_ip.address
-    }
-  }
-  tags                    = ["bastion"]
-  metadata_startup_script = <<-EOT
-  #!/bin/bash
-  sudo apt-get update
-  sudo apt-get install -y kubectl
-  sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
-  EOT
+variable "gke_password" {
+  default     = ""
+  description = "gke password"
 }
 
-# GKE
 variable "gke_num_nodes" {
   default     = 1
   description = "number of gke nodes"
@@ -47,7 +25,7 @@ resource "google_container_cluster" "primary" {
   remove_default_node_pool = true
   initial_node_count       = 1
   network                  = google_compute_network.vpc.name
-  subnetwork               = google_compute_subnetwork.subnet_private.name
+  subnetwork               = google_compute_subnetwork.subnet.name
   ip_allocation_policy {
     cluster_secondary_range_name  = "pods"
     services_secondary_range_name = "services"
@@ -61,7 +39,7 @@ resource "google_container_cluster" "primary" {
 
 # Separately Managed Node Pool
 resource "google_container_node_pool" "primary_nodes" {
-  name     = "${google_container_cluster.primary.name}-main-pool"
+  name     = google_container_cluster.primary.name
   location = var.region
   cluster  = google_container_cluster.primary.name
 
