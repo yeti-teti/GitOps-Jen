@@ -6,10 +6,10 @@ resource "google_compute_network" "vpc" {
 
 # Subnet Public Bastion and NAT
 resource "google_compute_subnetwork" "subnet_public" {
-  name    = "${var.project_id}-subnet-public"
+  name          = "${var.project_id}-subnet-public"
   ip_cidr_range = "10.0.0.0/24"
-  region  = var.region
-  network = google_compute_network.vpc.id
+  region        = var.region
+  network       = google_compute_network.vpc.id
 }
 
 # Subnet Private (For nodes)
@@ -58,7 +58,7 @@ resource "google_compute_firewall" "allow_ssh_to_bastion" {
     ports    = ["22"]
   }
   target_tags   = ["bastion"]
-  source_ranges = ["0.0.0.0/0"] # Open to the world. Restrict this to your IP.
+  source_ranges = ["0.0.0.0/0"]
 }
 
 # Firewall rule for GKE internal nodes communication
@@ -85,9 +85,9 @@ resource "google_compute_firewall" "allow_egress_from_private_subnet" {
   name    = "${var.project_id}-allow-egress-private"
   network = google_compute_network.vpc.self_link
   allow {
-    protocol = "all"
+    protocol = "all" # Allows all protocols
   }
   destination_ranges = ["0.0.0.0/0"]
-  source_tags = ["gke-node"]
-  direction = "EGRESS"
+  target_tags        = ["gke-node"]
+  direction          = "EGRESS"
 }
