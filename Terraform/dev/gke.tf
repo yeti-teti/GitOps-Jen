@@ -1,10 +1,12 @@
 # Bastion resource for GKE
 resource "google_compute_address" "bastion_static_ip" {
-  name   = "${var.project_id}-bastion-static-ip"
-  region = var.region
+  project = var.project_id
+  name    = "${var.project_id}-bastion-static-ip"
+  region  = var.region
 }
 
 resource "google_compute_instance" "bastion" {
+  project      = var.project_id
   name         = "${var.project_id}-bastion-vm-gke"
   machine_type = "e2-medium"
   zone         = var.zone
@@ -31,17 +33,20 @@ resource "google_compute_instance" "bastion" {
 
 # GKE
 variable "gke_num_nodes" {
+  type        = number
   default     = 1
   description = "number of gke nodes"
 }
 
 # GKE cluster
 data "google_container_engine_versions" "gke_version" {
+  project        = var.project_id
   location       = var.region
   version_prefix = "1.27."
 }
 
 resource "google_container_cluster" "primary" {
+  project                  = var.project_id
   name                     = "${var.project_id}-gke"
   location                 = var.region
   remove_default_node_pool = true
