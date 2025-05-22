@@ -22,3 +22,6 @@ sudo docker run -d --name sonarqube \
     sonarqube:lts-community
 
 # sudo docker logs -f sonarqube
+
+# Check firewall
+# sudo ufw allow 9000/tcp
