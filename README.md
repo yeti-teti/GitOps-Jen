@@ -5,14 +5,21 @@
 
 
 # Steps
+
+
 ### Setup Github Repo
 
 ### Create VM instance in GCP
+Manual:
 - Go to GCP console and create and configure compute engine vm instance
 - Run the script Jenkins/startup-script.sh to install required tools
 - Add firewall rule for Jenkins(PORT: 8080)
+- Note: You should setup static ip for the VM Instances as Dynamics instances can cause routing issues which can cause problems when using Jenkins
+Using Terraform:
+- Run the Script inside Terraform/Jen
 
 ### Configure Jenkins
+Manual:
 - Add GCP service account credentials
 - Add github credentials
 - Install Terraform adn other required plugins

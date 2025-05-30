@@ -1,0 +1,25 @@
+- name: Install Jenkins
+  hosts: all
+  remote_user: gke_user
+
+  tasks:
+    - name: update apt repo
+      command: sudo apt update -y
+
+    - name: Install Pip
+      apt:
+        name: python3-pip
+        state: latest
+      become: true
+
+    - name: Install Ansible
+      pip:
+        name: ansible
+
+    - name: Install Java Jre
+      apt: openjdk-17-jre -y
+
+    - name: Install Java Jdk
+      apt: openjdk-17-jdk -y
+
+    - name: Install Jenkins
