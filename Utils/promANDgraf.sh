@@ -15,6 +15,17 @@ helm repo update
 helm install grafana grafana/grafana
 
 # Edit the stable-kube-prometheus-sta-prometheus service to access from outside
-kubectl patch svc stable-kube-prometheus-sta-prometheus -n default -p '{"spec": {"type": "LoadBalancer"}}'
-# Grafana Pass
-kubectl get secret -n default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+kubectl patch svc prometheus-stack-kube-prom-prometheus -n monitoring -p '{"spec": {"type": "LoadBalancer"}}'
+# kubectl get svc -n monitoring 
+
+# Check pods
+# Make sure old test of prometheus node exporter running in another namespace are not running by accident.
+# kubectl get po --all-namespaces -o=jsonpath="{range .items[*]}{.spec.nodeName}{'\t'}{.spec.hostNetwork}{'\t'}{.metadata.namespace}{'\t'}{.metadata.name}{'\t'}{.spec.hostNetwork}{'\t'}{.spec.containers..containerPort}{'\n'}{end}"
+# helm uninstall prometheus
+
+# Grafana patch and Pass
+kubectl patch svc prometheus-stack-grafana -n monitoring -p '{"spec": {"type": "LoadBalancer"}}'
+# kubectl get svc prometheus-stack-grafana -n monitoring
+
+# Get prometheus-stack Grafana password
+kubectl get secret prometheus-stack-grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 --decode ; echo

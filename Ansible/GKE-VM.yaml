@@ -1,0 +1,213 @@
+- name: Statup Play
+  hosts: jenkinsvm
+  remote_user: gke_user
+  become: true
+  vars:
+    kubectl_version: "v1.28.4"
+
+  tasks:
+    # Update system packages
+    - name: Update apt repository
+      apt:
+        update_cache: yes
+      
+    # Install basic dependencies
+    - name: Install basic dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - wget
+          - curl
+          - python3-pip
+        state: present
+
+    # Java Installation
+    - name: Install Java JRE and JDK
+      apt:
+        name:
+          - openjdk-17-jre
+          - openjdk-17-jdk
+        state: present
+
+    # Jenkins Installation
+    - name: Download Jenkins GPG key
+      get_url:
+        url: https://pkg.jenkins.io/debian/jenkins.io-2023.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: '0644'
+
+    - name: Add Jenkins repository
+      lineinfile:
+        path: /etc/apt/sources.list.d/jenkins.list
+        line: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian binary/"
+        create: yes
+
+    - name: Update apt repository for Jenkins
+      apt:
+        update_cache: yes
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+    
+    # Docker Installation
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Add jenkins user to docker group
+      user:
+        name: jenkins
+        groups: docker
+        append: yes
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Set permissions on docker socket
+      file:
+        path: /var/run/docker.sock
+        mode: '0777'
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: restarted
+        enabled: yes
+
+    # GCP CLI Installation
+    - name: Add Google Cloud SDK repository
+      lineinfile:
+        path: /etc/apt/sources.list.d/google-cloud-sdk.list
+        line: "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main"
+        create: yes
+    
+    - name: Add Google Cloud SDK GPG key
+      shell: |
+        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg
+
+    - name: Update apt and install Google Cloud CLI
+      apt:
+        update_cache: yes
+        name: google-cloud-cli
+        state: present
+    
+    # kubectl Installation
+    - name: Download kubectl binary
+      get_url:
+        url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
+        dest: /tmp/kubectl
+        mode: '0755'
+
+    - name: Move kubectl to /usr/local/bin
+      copy:
+        src: /tmp/kubectl
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+        remote_src: yes
+    
+    # Terraform Installation
+    - name: Add HashiCorp GPG key
+      shell: |
+        wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+    - name: Add HashiCorp repository
+      shell: |
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+
+    - name: Update apt and install Terraform
+      apt:
+        update_cache: yes
+        name: terraform
+        state: present
+    
+    # Trivy Installation
+    - name: Add Trivy GPG key
+      shell: |
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | apt-key add -
+
+    - name: Add Trivy repository
+      shell: |
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | tee -a /etc/apt/sources.list.d/trivy.list
+
+    - name: Update apt and install Trivy
+      apt:
+        update_cache: yes
+        name: trivy
+        state: present
+    
+    # Helm Installation
+    - name: Install Helm via snap
+      snap:
+        name: helm
+        classic: yes
+
+    # Start Jenkins service
+    - name: Start and enable Jenkins service
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes
+    
+    # SonarQube Installation
+    - name: Add gpg key
+      shell: -sSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+    
+    - name: Docker Volume for Sonarqube data
+      docker_volume:
+        name: sonarqube_data
+
+    - name: Docker Volume for Sonarqube logs
+      docker_volume:
+        name: sonarqube_logs
+
+    - name: Docker Volume for Sonarqube extensions
+      docker_volume:
+        name: sonarqube_extensions
+    
+    # SonarQube Container
+    - name: Pull SonarQube Docker image
+      docker_image:
+        name: sonarqube:lts-community
+        source: pull
+
+    - name: Run SonarQube container
+      docker_container:
+        name: sonarqube
+        image: sonarqube:lts-community
+        state: started
+        ports:
+          - "9000:9000"
+        env:
+          SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+        volumes:
+          - sonarqube_data:/opt/sonarqube/data
+          - sonarqube_logs:/opt/sonarqube/logs
+          - sonarqube_extensions:/opt/sonarqube/extensions
+        restart_policy: unless-stopped
+    
+    - name: Wait for SonarQube to be ready
+      uri:
+        url: "http://localhost:9000"
+        method: GET
+        status_code: 200
+      register: sonarqube_check
+      until: sonarqube_check.status == 200
+      retries: 30
+      delay: 10
+      ignore_errors: yes
+
+    - name: Display SonarQube status
+      debug:
+        msg: "SonarQube is running at http://localhost:9000"
+      when: sonarqube_check.status == 200
+
+    

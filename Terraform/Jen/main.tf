@@ -32,11 +32,13 @@ resource "google_compute_instance" "jenkins-server" {
 
   network_interface {
     access_config {
-      nat_ip       = "34.170.141.59"
+      # Static external IP
+      nat_ip       = "" 
       network_tier = "PREMIUM"
     }
 
-    network_ip  = "10.128.0.8"
+    # Static Internal IP
+    network_ip  = ""
     queue_count = 0
     stack_type  = "IPV4_ONLY"
     subnetwork  = "projects/exalted-crane-459000-g5/regions/us-central1/subnetworks/default"
@@ -80,4 +82,21 @@ module "ops_agent_policy" {
       }
     }]
   }
+}
+
+resource "google_compute_firewall" "allow-jenkins" {
+  name = "allow-jenkins"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports = ["22", "80", "8080", "9000", "50000"]
+  }
+  
+  allow {
+    protocol = "icmp"
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags = ["jenkins-server"]
 }

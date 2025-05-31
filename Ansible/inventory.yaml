@@ -1,0 +1,8 @@
+jenkinsvm:
+  hosts:
+    "" # IP of Jenkins VM
+
+bastionvm:
+  hosts:
+    "" # IP of Bastion host
+    

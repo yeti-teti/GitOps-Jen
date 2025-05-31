@@ -1,0 +1,44 @@
+- name: Bastion Play
+  hosts: bastionvm
+  remote_user: gke_user
+  become: true 
+
+  tasks:
+
+    - name: Install kubectl
+      apt:
+        update_cache: yes
+        name: kubectl
+        state: present
+
+    - name: Install google-cloud-cli
+      apt: 
+        update_cache: yes
+        name: google-cloud-sdk-gke-gcloud-auth-plugin
+        state: present
+    
+    # Helm installation
+    - name: Add Helm GPG key
+      shell: curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+    
+    - name: Install apt transport https 
+      apt:
+        name: apt-transport-https -y
+    
+    - name: Add Helm repository
+      lineinfile:
+        path: /etc/apt/sources.list.d/helm-stable-debian.list
+        line: deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main
+        append: yes
+    
+    - name: Install helm
+      apt: 
+        update_cache: yes
+        name: helm
+        state: present
+    
+    # Monitoring 
+    # Add Prometheus repo
+    - name: Add Prometheus repo
+      helm:
+
