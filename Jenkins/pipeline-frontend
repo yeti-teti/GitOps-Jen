@@ -1,9 +1,9 @@
 pipeline {
     agent any
     
-    tools {
-        nodejs 'nodejs'
-    }
+    // tools {
+    //     nodejs 'nodejs'
+    // }
     parameters {
         string(name: 'GCP_PROJECT_ID', defaultValue: 'exalted-crane-459000-g5', description: 'GCP Project ID')
         string(name: 'GAR_REPO_NAME', defaultValue: 'frontend', description: 'Google Artifact Registry Repository Name')

@@ -61,6 +61,26 @@ resource "google_compute_firewall" "allow_ssh_to_bastion" {
   source_ranges = ["0.0.0.0/0"]
 }
 
+# Firewall to allows SSH from Bastion to GKE nodes
+resource "google_compute_firewall" "allow_ssh_bastion_to_gke" {
+  name    = "${var.project_id}-allow-ssh-bastion-to-gke"
+  network = google_compute_network.vpc.self_link
+  
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+  
+  allow {
+    protocol = "icmp"
+  }
+  
+  source_ranges = ["10.0.0.0/24"]  # Bastion subnet
+  target_tags   = ["gke-node"]     # GKE nodes
+  
+  description = "Allow SSH and ICMP from bastion to GKE nodes"
+}
+
 # Firewall rule for GKE internal nodes communication
 resource "google_compute_firewall" "allow_internal_gke" {
   name    = "${var.project_id}-allow-internal-gke"
