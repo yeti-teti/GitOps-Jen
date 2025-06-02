@@ -129,7 +129,7 @@ pipeline {
             }
             steps {
                 script {
-                    dir('k8s/Frontend') {
+                    dir('k8s/frontend') {
                         withCredentials([usernamePassword(credentialsId: 'github-credentials-id', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GITHUB_TOKEN')]) {
                             sh '''
                                 REPOSITORY_URI="${GCP_DEFAULT_REGION}-docker.pkg.dev/${GCP_ACCOUNT_ID}/${GCP_GAR_REPO_NAME}/frontend-app"
