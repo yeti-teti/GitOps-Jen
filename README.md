@@ -1,7 +1,7 @@
 # Scalable and Fault Tolerant CI/CD pipeline for Kubernetes setup on GCP
 
 ## Flow Diagram
-https://miro.medium.com/v2/resize:fit:1400/format:webp/1*CMSHt3p1wqK7u7cUQEsz7A.jpeg
+![CI/CD Pipeline Flow Diagram](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*CMSHt3p1wqK7u7cUQEsz7A.jpeg)
 
 ## Steps
 
