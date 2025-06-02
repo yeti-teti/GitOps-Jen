@@ -142,5 +142,5 @@
 ### Deploy using ArgoCD
 
 - Connect Repo: Setting > REPO > VIA HTTP/HTTPS > Provide URL, Username, Password (Access Token)
+- Create ns in k8s
 - Create Application: Applications > Create > Fill and provide the directory where the manifests are present (eg: for frontend or backend)
-- Add Image pull auth from Artifact registry in k8s nodes to allow it to pull images
