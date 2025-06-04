@@ -135,11 +135,14 @@ pipeline {
                                 REPOSITORY_URI="${GCP_DEFAULT_REGION}-docker.pkg.dev/${GCP_ACCOUNT_ID}/${GCP_GAR_REPO_NAME}/frontend-app"
                                 git config user.email "yetit1762@gmail.com"
                                 git config user.name "yeti-teti"
+                                
                                 echo "Build number: ${BUILD_NUMBER}"
                                 echo "Repository URI: ${REPOSITORY_URI}"
                                 imageTag=$(grep -oP '(?<=frontend-app:)[^ ]+' deployment.yaml)
+
                                 echo "Current image tag: $imageTag"
-                                sed -i "s|${GCP_GAR_REPO_NAME}/frontend-app:${imageTag}|${REPOSITORY_URI}:${BUILD_NUMBER}|" deployment.yaml
+
+                                sed -i "s|frontend-app:${imageTag}|frontend-app:${BUILD_NUMBER}|" deployment.yaml
                                 git add deployment.yaml
                                 git commit -m "Update deployment Image to version ${BUILD_NUMBER}"
                                 git push "https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}" HEAD:main

@@ -136,9 +136,12 @@ pipeline {
                                 git config user.name "yeti-teti"
                                 echo "Build number: ${BUILD_NUMBER}"
                                 echo "Repository URI: ${REPOSITORY_URI}"
-                                imageTag=$(grep -oP '(?<=backend-api:)[^ ]+' deployment.yaml)
-                                echo "Current image tag: $imageTag"
-                                sed -i "s|${GCP_GAR_REPO_NAME}/backend-api:${imageTag}|${REPOSITORY_URI}:${BUILD_NUMBER}|" deployment.yaml
+
+                                sed -i "s|backend-api:[0-9]*|backend-api:${BUILD_NUMBER}|g" deployment.yaml
+
+                                echo "Updated deployment.yaml content:"
+                                cat deployment.yaml
+
                                 git add deployment.yaml
                                 git commit -m "Update deployment Image to version ${BUILD_NUMBER}"
                                 git push "https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}" HEAD:main
